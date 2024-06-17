@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Focus Mode Options</title>
+  <style>
+    body { font-family: Arial, sans-serif; width: 300px; }
+    label { display: block; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h3>Focus Mode Options</h3>
+  <label>
+    Blocked Sites (comma-separated):
+    <input type="text" id="blockedSites" />
+  </label>
+  <label>
+    Break Interval (minutes):
+    <input type="number" id="breakInterval" min="1" />
+  </label>
+  <button id="saveButton">Save</button>
+  <script src="options.js"></script>
+</body>
+</html>
