@@ -216,12 +216,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
     function promptForPassword(successCallback) {
         const enteredPassword = window.prompt('Enter your password:');
-        if (enteredPassword !== null) {
+        if (enteredPassword === null) {
+          callback(false); // Prompt was cancelled
+        } else {
             chrome.storage.sync.get('password', (data) => {
                 if (data.password === enteredPassword) {
                     successCallback(data.password === enteredPassword);
                 } else {
                     alert('Incorrect password!');
+                    callback(false);
                 }
             });
         }

@@ -96,6 +96,7 @@ li button:hover {
 }
 label, .break-reminder, #status {
 color: var(--tab-col);
+text-align: center;
 }
 
 .label-class {
@@ -199,4 +200,8 @@ opacity: .05;
 bottom: 4px;
 right: 20px;
 z-index: 0;
+}
+
+.point-cursor {
+  cursor:pointer;
 }

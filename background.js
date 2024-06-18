@@ -19,6 +19,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.storage.onChanged.addListener((changes, namespace) => {
     if (changes.breakInterval) {
         setBreakReminderAlarm(changes.breakInterval.newValue);
+        clearBadge()
         console.log('Break interval changed to', changes.breakInterval.newValue);
     }
 });
@@ -117,19 +118,10 @@ function updateBadge(isBreakTime) {
 function updateBreakReminder(isBreakTime) {
     chrome.storage.sync.set({ isBreakTime });
     if (isBreakTime) {
-        // Show overlay
+    
         updateBadge(isBreakTime)
-        // chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        //     if (tabs.length > 0) {
-        //         const tab = tabs[0];
-        //         chrome.scripting.executeScript({
-        //             target: { tabId: tab.id },
-        //             files: ['overlay.js']
-        //         });
-        //     } else {
-        //         console.error("No active tabs found.");
-        //     }
-        // });
+        openPopup();
+       
     } else {
         // Hide overlay
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -161,4 +153,30 @@ function updateBadge(isBreakTime) {
 function clearBadge() {
   chrome.action.setBadgeText({ text: '' });
   console.log('Badge cleared');
+}
+
+function showNotification(isBreakTime) {
+    chrome.contextMenus.removeAll(() => {
+        chrome.contextMenus.create({
+            id: 'mode',
+            title: isBreakTime ? 'Current Mode: Break' : 'Current Mode: Focus',
+            contexts: ['action']
+        });
+    });
+}
+function openPopup() {
+    const options = {
+        type: 'basic',
+        title: 'Break Time!',
+        iconUrl:'icons/active.png',
+        message:'Take a break!'
+    };
+    chrome.notifications.create(options, 
+         function(notificationId) {
+            if (chrome.runtime.lastError) {
+              console.error(chrome.runtime.lastError);
+            } else {
+              console.log('Notification created with ID:', notificationId);
+            }
+          });  
 }

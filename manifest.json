@@ -3,7 +3,7 @@
     "name": "Focus Mode",
     "version": "1.0",
     "description": "A plugin that helps you stay focused by blocking distracting websites, sending reminders to take breaks, and tracking your productivity over time.",
-    "permissions": ["storage", "tabs", "alarms", "scripting", "activeTab"],
+    "permissions": ["storage", "tabs", "alarms", "scripting", "activeTab", "notifications"],
     "action": {
       "default_popup": "popup.html",
       "default_icon": {
