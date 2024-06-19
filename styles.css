@@ -128,8 +128,8 @@ button, li {
   border: 1px solid var(--button-border-col);
   color: var(--tab-col);
   height: 30px;
-  width: 70px;
   border-radius: 5px;
+  min-width: 75px;
 }
 
 button:hover, li:hover {
@@ -204,4 +204,8 @@ z-index: 0;
 
 .point-cursor {
   cursor:pointer;
+}
+
+.mb-10 {
+  margin-bottom: 10px;
 }

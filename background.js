@@ -9,12 +9,17 @@ chrome.runtime.onInstalled.addListener(() => {
         breakInterval: defaultBreakInterval,
         focusModeEnabled: false,
         isBreakTime: false,
-        breakDuration: 5
+        breakDuration: 5,
+        keywords: []
     });
     setBreakReminderAlarm(defaultBreakInterval);
     console.log('Focus Mode extension installed');
     clearBadge()
 });
+
+
+
+
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
     if (changes.breakInterval) {
@@ -22,7 +27,49 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
         clearBadge()
         console.log('Break interval changed to', changes.breakInterval.newValue);
     }
+    if (changes.scheduledFocusMode || changes.focusStartTime || changes.focusEndTime) {
+        setFocusModeAlarms();
+    }
 });
+
+function setFocusModeAlarms() {
+    chrome.alarms.clear("startFocusMode");
+    chrome.alarms.clear("endFocusMode");
+
+    chrome.storage.sync.get(["scheduledFocusMode", "focusStartTime", "focusEndTime"], (data) => {
+        if (data.scheduledFocusMode) {
+            const startTime = data.focusStartTime || "08:00";
+            const endTime = data.focusEndTime || "17:00";
+
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+
+            const now = new Date();
+            const startAlarm = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHour, startMinute);
+            const endAlarm = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHour, endMinute);
+
+            if (startAlarm < now) {
+                startAlarm.setDate(startAlarm.getDate() + 1);
+            }
+            if (endAlarm < now) {
+                endAlarm.setDate(endAlarm.getDate() + 1);
+            }
+
+            chrome.alarms.create("startFocusMode", { when: startAlarm.getTime(), periodInMinutes: 1440 });
+            chrome.alarms.create("endFocusMode", { when: endAlarm.getTime(), periodInMinutes: 1440 });
+
+            // Immediately enable focus mode if current time is within the range
+            if (now >= new Date(now.getFullYear(), now.getMonth(), now.getDate(), startHour, startMinute) && 
+                now < new Date(now.getFullYear(), now.getMonth(), now.getDate(), endHour, endMinute)) {
+                chrome.storage.sync.set({ focusModeEnabled: true });
+                focusModeEnabled = true;
+                clearBadge();
+                setBreakReminderAlarm(data.breakInterval || defaultBreakInterval);
+            }
+        }
+    });
+}
+
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.url) {
@@ -44,6 +91,19 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === "breakReminder") {
         console.log('Break reminder alarm triggered');
         updateBreakReminder(true);
+    } else if (alarm.name === "startFocusMode") {
+        chrome.storage.sync.set({ focusModeEnabled: true });
+        focusModeEnabled = true;
+        clearBadge();
+        chrome.storage.sync.get("breakInterval", (data) => {
+            setBreakReminderAlarm(data.breakInterval || defaultBreakInterval);
+        });
+    } else if (alarm.name === "endFocusMode") {
+        chrome.storage.sync.set({ focusModeEnabled: false });
+        focusModeEnabled = false;
+        unblockSites();
+        chrome.alarms.clear("breakReminder");
+        clearBadge();
     }
 });
 
@@ -92,6 +152,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.sync.set({ breakDuration: duration });
         sendResponse({ success: true });
         console.log('Break duration updated to', duration, 'minutes');
+    } else if (message.action === "updateSchedule") {
+        setFocusModeAlarms();
+        sendResponse({ success: true });
     }
 });
 
@@ -120,7 +183,6 @@ function updateBreakReminder(isBreakTime) {
     if (isBreakTime) {
     
         updateBadge(isBreakTime)
-        openPopup();
        
     } else {
         // Hide overlay
@@ -164,19 +226,6 @@ function showNotification(isBreakTime) {
         });
     });
 }
-function openPopup() {
-    const options = {
-        type: 'basic',
-        title: 'Break Time!',
-        iconUrl:'icons/active.png',
-        message:'Take a break!'
-    };
-    chrome.notifications.create(options, 
-         function(notificationId) {
-            if (chrome.runtime.lastError) {
-              console.error(chrome.runtime.lastError);
-            } else {
-              console.log('Notification created with ID:', notificationId);
-            }
-          });  
-}
+
+
+setFocusModeAlarms();
