@@ -17,9 +17,6 @@
     "host_permissions": [
     "<all_urls>"
   ],
-    "options_ui": {
-      "page": "options.html"
-    },
     "icons": {
         "16": "icons/inactive.png",
         "48": "icons/inactive.png",

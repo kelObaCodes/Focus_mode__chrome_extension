@@ -383,4 +383,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     setRandomImages();
+    const toggleThemeButton = document.getElementById("toggleThemeButton");
+
+    const themeToggle = document.getElementById("themeToggle");
+
+    // Load the saved theme from chrome.storage.sync
+    chrome.storage.sync.get("theme", (data) => {
+        if (data.theme === "white-theme") {
+            document.body.classList.add("white-theme");
+        } else {
+            document.body.classList.remove("white-theme");
+        }
+    });
+
+    themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("white-theme");
+
+        // Save the current theme to chrome.storage.sync
+        const theme = document.body.classList.contains("white-theme") ? "white-theme" : "default";
+        chrome.storage.sync.set({ theme });
+    });
 });

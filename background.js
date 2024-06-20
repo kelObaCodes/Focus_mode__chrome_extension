@@ -10,7 +10,9 @@ chrome.runtime.onInstalled.addListener(() => {
         focusModeEnabled: false,
         isBreakTime: false,
         breakDuration: 5,
-        keywords: []
+        keywords: [],
+        
+        
     });
     setBreakReminderAlarm(defaultBreakInterval);
     console.log('Focus Mode extension installed');
