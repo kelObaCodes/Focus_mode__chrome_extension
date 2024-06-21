@@ -43,6 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const endTimeInput = document.getElementById("endTime");
     const saveScheduleButton = document.getElementById("saveScheduleButton");
 
+    const blockedSitesMode = document.getElementById('blockedSitesMode');
+    const allowedSitesMode = document.getElementById('allowedSitesMode');
+
     // Load initial state
     chrome.storage.sync.get(
         [
@@ -81,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 endTimeInput.value = data.focusEndTime || "17:00";
             } else {
                 scheduledTimes.style.display = "none";
+                
             }
         }
     );
@@ -156,6 +160,84 @@ document.addEventListener("DOMContentLoaded", () => {
         content.style.display = "block";
     }
 
+  // Function to add allowed site
+  function addAllowedSite() {
+    const site = allowedSiteInput.value.trim();
+    if (site) {
+        chrome.storage.sync.get('allowedSites', function (data) {
+            const allowedSites = data.allowedSites || [];
+            if (!allowedSites.includes(site)) {
+                allowedSites.push(site);
+                chrome.storage.sync.set({ allowedSites }, function () {
+                    allowedSiteInput.value = '';
+                    renderAllowedSites(allowedSites);
+                });
+            }
+        });
+    }
+}
+
+
+    // Function to render allowed sites
+    function renderAllowedSites(sites) {
+      allowedSitesList.innerHTML = '';
+      sites.forEach(site => {
+          const li = document.createElement('li');
+          li.textContent = site;
+          const removeButton = document.createElement('button');
+          removeButton.textContent = 'delete';
+          removeButton.addEventListener('click', function () {
+              removeAllowedSite(site);
+          });
+          li.appendChild(removeButton);
+          allowedSitesList.appendChild(li);
+      });
+  }
+
+   // Function to remove allowed site
+   function removeAllowedSite(site) {
+    chrome.storage.sync.get('allowedSites', function (data) {
+        let allowedSites = data.allowedSites || [];
+        allowedSites = allowedSites.filter(s => s !== site);
+        chrome.storage.sync.set({ allowedSites }, function () {
+            renderAllowedSites(allowedSites);
+        });
+    });
+}
+
+    // Event listener for adding allowed site
+    addAllowedSiteButton.addEventListener('click', addAllowedSite);
+
+
+      // Render allowed sites on load
+      chrome.storage.sync.get('allowedSites', function (data) {
+        const allowedSites = data.allowedSites || ['google.com'];
+        chrome.storage.sync.set({ allowedSites }); // Ensure default is set
+        renderAllowedSites(allowedSites);
+    });
+
+    // Event listeners for mode toggle
+    blockedSitesMode.addEventListener('change', function () {
+        if (blockedSitesMode.checked) {
+            chrome.storage.sync.set({ mode: 'blocked' });
+        }
+    });
+
+    allowedSitesMode.addEventListener('change', function () {
+        if (allowedSitesMode.checked) {
+            chrome.storage.sync.set({ mode: 'allowed' });
+        }
+    });
+
+    // Load mode on startup
+    chrome.storage.sync.get('mode', function (data) {
+        if (data.mode === 'allowed') {
+            allowedSitesMode.checked = true;
+        } else {
+            blockedSitesMode.checked = true;
+        }
+    });
+
     // Add blocked site
     addBlockedSiteButton.addEventListener("click", () => {
         const site = blockedSiteInput.value.trim();
@@ -218,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const li = document.createElement("li");
         li.textContent = site;
         const removeButton = document.createElement("button");
-        removeButton.textContent = "x";
+        removeButton.textContent = "delete";
         removeButton.addEventListener("click", () => {
             promptForPassword((success) => {
                 if (success) {
@@ -383,7 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     setRandomImages();
-    const toggleThemeButton = document.getElementById("toggleThemeButton");
 
     const themeToggle = document.getElementById("themeToggle");
 

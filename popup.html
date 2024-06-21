@@ -9,14 +9,15 @@
     </head>
     <body>
         <img src="./icons/checked.png" id="backImg" height="550" />
+        <img src="./icons/pattern.png" id="patternImg" height="550" />
 
         <div class="plugin-cover">
+
             <div class="tab-container">
                 <div class="tab active" id="focusTab">Focus Mode</div>
                 <div class="tab" id="optionsTab">Options</div>
                 <div class="tab" id="authTab">Auth</div>
             </div>
-            <button id="themeToggle">Toggle Theme</button>
             <div id="focusContent" class="tab-content active">
                 <h1>Focus Mode</h1>
                 <label class="point-cursor">
@@ -73,6 +74,19 @@
                 </div>
 
                 <div class="separator"></div>
+                <div>
+                  <div class="block-mode">
+                    <label class="label-class">Enter Block Mode:</label>
+
+                  </div>
+                  <label class="label-class">
+                      <input type="radio" name="mode" id="blockedSitesMode" /> Blocked Sites Mode
+                  </label>
+                  <label class="label-class">
+                      <input type="radio" name="mode" id="allowedSitesMode" /> Allowed Sites Mode
+                  </label>
+              </div>
+                <div class="separator"></div>
 
                 <div>
                     <label class="label-class">Enter Blocked Sites:</label>
@@ -107,6 +121,13 @@
                         ></ul>
                     </div>
                 </div>
+                <div class="separator"></div>
+
+                <div>
+                    <p class="blocked-site-text">Change Theme</p>
+        <button id="themeToggle">Toggle Theme</button>
+
+            </div>
             </div>
         
             <div id="authContent" class="tab-content">
@@ -147,7 +168,9 @@
                 >
                 <a href="#" id="goBack" class="hidden anchor">Go back?</a>
             </div>
+
         </div>
+
         <p class="name">
             Designed & developed by
             <a

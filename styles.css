@@ -52,6 +52,8 @@ body {
   overflow: auto;
   position: relative;
   z-index: 4;
+  box-shadow:  0px 1px 0px 0px var(--bg);
+  border-color: var(--dark-bg)
 }
 
 .tab-container {
@@ -232,6 +234,13 @@ a {
   right: 20px;
   z-index: 0;
 }
+#patternImg {
+  position: absolute;
+  opacity: .05;
+  bottom: 14px;
+  left: 20px;
+  z-index: 0;
+}
 
 .point-cursor {
   cursor: pointer;
@@ -239,4 +248,8 @@ a {
 
 .mb-10 {
   margin-bottom: 10px;
+}
+
+.block-mode {
+margin-bottom: 10px;
 }

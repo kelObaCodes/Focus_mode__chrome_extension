@@ -2,16 +2,48 @@ const defaultBlockedSites = ["facebook.com", "youtube.com", "reddit.com"];
 const defaultBreakInterval = 60; // Default to 60 minutes
 let focusModeEnabled = false;
 let breakTimer = null;
+const defaultAllowedSites = ["google.com"];
+
+// Function to check if URL is allowed
+function isAllowed(url) {
+    const hostname = new URL(url).hostname;
+    return new Promise(resolve => {
+        chrome.storage.sync.get('allowedSites', function (data) {
+            const allowedSites = data.allowedSites || defaultAllowedSites;
+            resolve(allowedSites.some(site => hostname.includes(site)));
+        });
+    });
+}
+
+// Function to enforce allowed sites mode
+function enforceAllowedSitesMode(tabId, url) {
+    if (!url || url === "chrome://newtab/") {
+        // Allow new empty tabs to remain open
+        return;
+    }
+    isAllowed(url).then(allowed => {
+        if (!allowed) {
+            chrome.tabs.query({}, function (tabs) {
+                if (tabs.length === 1) {
+                    chrome.tabs.update(tabId, { url: 'https://google.com' });
+                } else {
+                    chrome.tabs.remove(tabId);
+                }
+            });
+        }
+    });
+}
+
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.sync.set({
         blockedSites: defaultBlockedSites,
+        allowedSites: defaultAllowedSites,
         breakInterval: defaultBreakInterval,
         focusModeEnabled: false,
+        mode: 'blocked',
         isBreakTime: false,
         breakDuration: 5,
-        keywords: [],
-        
         
     });
     setBreakReminderAlarm(defaultBreakInterval);
@@ -26,11 +58,14 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.storage.onChanged.addListener((changes, namespace) => {
     if (changes.breakInterval) {
         setBreakReminderAlarm(changes.breakInterval.newValue);
-        clearBadge()
+        clearBadge();
         console.log('Break interval changed to', changes.breakInterval.newValue);
     }
     if (changes.scheduledFocusMode || changes.focusStartTime || changes.focusEndTime) {
         setFocusModeAlarms();
+    }
+    if (changes.mode) {
+        mode = changes.mode.newValue;
     }
 });
 
@@ -74,20 +109,33 @@ function setFocusModeAlarms() {
 
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.url) {
-        chrome.storage.sync.get(["blockedSites", "focusModeEnabled"], (data) => {
-            const blockedSites = data.blockedSites || defaultBlockedSites;
-            const focusModeEnabled = data.focusModeEnabled;
+    chrome.storage.sync.get(["blockedSites", "focusModeEnabled", "mode"], (data) => {
+        const blockedSites = data.blockedSites || defaultBlockedSites;
+        const focusModeEnabled = data.focusModeEnabled;
+        const mode = data.mode || 'blocked';
 
-            if (focusModeEnabled) {
+        if (focusModeEnabled && changeInfo.url) {
+            if (mode === 'blocked') {
                 const url = new URL(changeInfo.url);
                 if (blockedSites.some(site => url.hostname.includes(site))) {
                     chrome.tabs.remove(tabId);
                 }
+            } else if (mode === 'allowed') {
+                enforceAllowedSitesMode(tabId, changeInfo.url);
             }
-        });
-    }
+        }
+    });
 });
+
+chrome.tabs.onCreated.addListener((tab) => {
+    chrome.storage.sync.get("mode", (data) => {
+        const mode = data.mode || 'blocked';
+        if (mode === 'allowed') {
+            enforceAllowedSitesMode(tab.id, tab.url);
+        }
+    });
+});
+
 
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === "breakReminder") {
